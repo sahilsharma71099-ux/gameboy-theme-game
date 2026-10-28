@@ -1,32 +1,8 @@
-# 🎮 Pokémon Emerald/FireRed Style Web RPG
+🎮 Monster Adventure: Retro Web RPGA lightweight, top-down retro RPG inspired by classic Game Boy Advance (GBA) monster-catching games. Built from scratch using native HTML5 Canvas, JavaScript (ES6+), and CSS3, featuring interactive NPCs, wild monster encounters, turn-based battle mechanics, synthesized 8-bit sound effects, and persistent local storage.✨ Features🗺️ Tile-Based World & Movement: Top-down grid map with realistic collision handling (trees, water, buildings, obstacles).🌿 Tall Grass Encounters: Step into tall grass for a randomized chance to trigger wild Monster battles.💬 Interactive NPC Dialogue System: Talk to townspeople and your rival using dynamic retro dialogue boxes.🚪 Indoor & Outdoor Map Transitions: Walk through doors to seamlessly enter Marts, Labs, and Monster Centers.⚔️ Turn-Based Battle System: Complete GBA-style battle screen with HP bars, attack animations, damage calculation, move selection, and run/catch logic.🔊 Retro Web Audio Synthesizer: Built-in 8-bit sound effects (BGM themes, attack sounds, hit SFX, text blips) generated entirely with the Web Audio API without needing external MP3 files.💾 LocalStorage Auto-Save System: Save your game progress, player position, badge counts, and party stats directly in your browser.📘 Integrated User Guide: Modal overlay at startup explaining controls, mechanics, and objectives.🕹️ ControlsActionKeyboard KeyOn-Screen ControlMove UpW or Up Arrow▲ D-Pad ButtonMove DownS or Down Arrow▼ D-Pad ButtonMove LeftA or Left Arrow◀ D-Pad ButtonMove RightD or Right Arrow▶ D-Pad ButtonAction / Talk / Select (A)Space or Enter or ZA ButtonBack / Cancel / Run (B)Escape or XB ButtonToggle Game GuideHGuide Icon🚀 Quick Start / How to RunBecause this project uses vanilla web technologies without external dependencies, no complex installation or build process is required!Download or Clone the Repository:git clone https://github.com/your-username/monster-retro-rpg.git
+cd monster-retro-rpg
 
-A lightweight, top-down retro RPG inspired by classic Game Boy Advance (GBA) Pokémon games. Built from scratch using native **HTML5 Canvas**, **JavaScript (ES6+)**, and **CSS3**, featuring interactive NPCs, wild Pokémon encounters, turn-based battle mechanics, synthesized 8-bit sound effects, and persistent local storage.
+Open the Game:Double-click index.html to open it directly in any modern web browser (Chrome, Firefox, Safari, Edge).Alternative: Use a local server (like VS Code's Live Server extension or python3 -m http.server) for optimal Web Audio performance.📂 Project Structure├── index.html         # Main standalone file containing Game Loop, Canvas Renderer, 
+│                      # Audio Engine, Battle System, and CSS GBA Styling.
+└── README.md          # Project documentation and guide
 
----
-
-## ✨ Features
-
-* **🗺️ Tile-Based World & Movement**: Top-down grid map with realistic collision handling (trees, water, buildings, obstacles).
-* **🌿 Tall Grass Encounters**: Step into tall grass for a randomized chance to trigger wild Pokémon battles.
-* **💬 Interactive NPC Dialogue System**: Talk to townspeople and your rival using dynamic retro dialogue boxes.
-* **🚪 Indoor & Outdoor Map Transitions**: Walk through doors to seamlessly enter Pokémarts, Lab, and Pokémon Centers.
-* **⚔️ Turn-Based Battle System**: Complete GBA-style battle screen with HP bars, attack animations, damage calculation, move selection, and run/catch logic.
-* **🔊 Retro Web Audio Synthesizer**: Built-in 8-bit sound effects (BGM themes, attack sounds, hit SFX, text blips) generated entirely with the Web Audio API without needing external MP3 files.
-* **💾 LocalStorage Auto-Save System**: Save your game progress, player position, badge counts, and party stats directly in your browser.
-* **📘 Integrated User Guide**: Modal overlay at startup explaining controls, mechanics, and objectives.
-
----
-
-## 🕹️ Controls
-
-| Action | Keyboard Key | On-Screen Control |
-| :--- | :--- | :--- |
-| **Move Up** | `W` or `Up Arrow` | `▲` D-Pad Button |
-| **Move Down** | `S` or `Down Arrow` | `▼` D-Pad Button |
-| **Move Left** | `A` or `Left Arrow` | `◀` D-Pad Button |
-| **Move Right** | `D` or `Right Arrow` | `▶` D-Pad Button |
-| **Action / Talk / Select (A)** | `Space` or `Enter` or `Z` | `A` Button |
-| **Back / Cancel / Run (B)** | `Escape` or `X` | `B` Button |
-| **Toggle Game Guide** | `H` | Guide Icon |
-
----
+🛠️ Architecture & Tech StackLanguage: JavaScript (ES6+ Vanilla)Graphics & Rendering: HTML5 2D Canvas API (requestAnimationFrame)Styling: CSS Custom Properties, Responsive Layouts, FlexboxAudio: Browser Web Audio API (AudioContext, Oscillators, Gain Nodes)Storage: Browser localStorage API💡 Gameplay & RulesStart Your Journey: Read the welcome guide to get acquainted with the controls and mechanics.Explore Littleroot Town: Speak with NPCs to gather hints and storyline lore.Train in Tall Grass: Walk through dark green grass patches outside the town boundary to find wild Monsters.
