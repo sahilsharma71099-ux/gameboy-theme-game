@@ -1,0 +1,1227 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Pokémon Emerald Retro Adventure</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Press Start 2P', cursive;
+            background-color: #0f172a;
+            color: #f8fafc;
+            touch-action: manipulation;
+            user-select: none;
+        }
+        canvas {
+            image-rendering: pixelated;
+            image-rendering: crisp-edges;
+        }
+        .gba-border {
+            border: 12px solid #334155;
+            border-radius: 20px;
+            box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.5), 0 8px 10px -6px rgba(0, 0, 0, 0.5);
+        }
+        /* Custom retro scrollbar */
+        ::-webkit-scrollbar {
+            width: 8px;
+        }
+        ::-webkit-scrollbar-track {
+            background: #1e293b;
+        }
+        ::-webkit-scrollbar-thumb {
+            background: #475569;
+            border-radius: 4px;
+        }
+    </style>
+</head>
+<body class="min-h-screen flex flex-col items-center justify-center p-2 sm:p-4">
+
+    <!-- Header / Title Banner -->
+    <div class="text-center mb-3">
+        <h1 class="text-xl sm:text-2xl text-yellow-400 drop-shadow-[0_2px_2px_rgba(0,0,0,0.8)] tracking-wide">
+            POKÉMON RETRO GBA
+        </h1>
+        <p class="text-[10px] sm:text-xs text-slate-400 mt-1">Emerald Edition - Web Canvas Engine</p>
+    </div>
+
+    <!-- Main Game Container -->
+    <div class="relative flex flex-col items-center">
+        <!-- Canvas Frame -->
+        <div class="gba-border relative bg-black overflow-hidden">
+            <canvas id="gameCanvas" width="480" height="320" class="block"></canvas>
+
+            <!-- Overlay: Game Guide / Manual -->
+            <div id="guideOverlay" class="absolute inset-0 bg-slate-900/95 text-white p-4 sm:p-6 flex flex-col justify-between overflow-y-auto text-xs z-30">
+                <div>
+                    <div class="flex justify-between items-center border-b border-slate-700 pb-2 mb-3">
+                        <h2 class="text-yellow-400 text-sm">TRAINER GUIDE</h2>
+                        <button id="closeGuideBtn" class="text-rose-400 hover:text-rose-300 font-bold px-2">[X] CLOSE</button>
+                    </div>
+                    
+                    <p class="text-slate-300 leading-relaxed mb-3">
+                        Welcome to the Emerald RPG Engine! Explore routes, talk to locals, and battle wild Pokémon in tall grass.
+                    </p>
+
+                    <div class="space-y-2 bg-slate-800/80 p-3 rounded-lg border border-slate-700 mb-3">
+                        <div class="font-bold text-emerald-400 mb-1">CONTROLS:</div>
+                        <div class="grid grid-cols-2 gap-2 text-[10px]">
+                            <div><span class="text-yellow-300">W, A, S, D / Arrows:</span> Walk</div>
+                            <div><span class="text-yellow-300">Z / Space / Enter:</span> Interact / Confirm</div>
+                            <div><span class="text-yellow-300">X / Shift:</span> Cancel / Run</div>
+                            <div><span class="text-yellow-300">M / ESC:</span> Pause Menu</div>
+                            <div><span class="text-yellow-300">H:</span> Open Help Guide</div>
+                            <div><span class="text-yellow-300">Touch D-Pad:</span> On-Screen Controls</div>
+                        </div>
+                    </div>
+
+                    <div class="space-y-1 text-[10px] text-slate-400">
+                        <p>💡 <span class="text-slate-200">Tips:</span> Walk into dark tall grass to trigger wild encounters.</p>
+                        <p>🏥 Visit the Pokémon Center to heal your team anytime.</p>
+                        <p>💾 Open menu (M) to save progress directly to browser storage.</p>
+                    </div>
+                </div>
+
+                <button id="startAdventureBtn" class="mt-4 w-full bg-emerald-600 hover:bg-emerald-500 text-white py-3 rounded text-center font-bold tracking-wider transition-all transform active:scale-95 shadow-lg">
+                    START ADVENTURE ▶
+                </button>
+            </div>
+
+            <!-- Virtual On-Screen Controls for Mobile/Touch -->
+            <div id="mobileControls" class="absolute bottom-2 right-2 left-2 flex justify-between items-end pointer-events-none md:hidden z-20 opacity-80">
+                <!-- D-Pad -->
+                <div class="grid grid-cols-3 gap-1 w-28 h-28 pointer-events-auto">
+                    <div></div>
+                    <button id="btnUp" class="bg-slate-700/80 active:bg-slate-500 rounded text-center leading-10 text-white font-bold select-none">▲</button>
+                    <div></div>
+                    <button id="btnLeft" class="bg-slate-700/80 active:bg-slate-500 rounded text-center leading-10 text-white font-bold select-none">◀</button>
+                    <div class="bg-slate-800/50 rounded"></div>
+                    <button id="btnRight" class="bg-slate-700/80 active:bg-slate-500 rounded text-center leading-10 text-white font-bold select-none">▶</button>
+                    <div></div>
+                    <button id="btnDown" class="bg-slate-700/80 active:bg-slate-500 rounded text-center leading-10 text-white font-bold select-none">▼</button>
+                    <div></div>
+                </div>
+
+                <!-- Action Buttons -->
+                <div class="flex gap-2 pointer-events-auto">
+                    <button id="btnMenu" class="bg-indigo-700/80 active:bg-indigo-500 text-white w-9 h-9 rounded-full text-[10px] font-bold shadow select-none flex items-center justify-center">MENU</button>
+                    <button id="btnB" class="bg-rose-700/80 active:bg-rose-500 text-white w-10 h-10 rounded-full text-xs font-bold shadow select-none flex items-center justify-center">B</button>
+                    <button id="btnA" class="bg-emerald-700/80 active:bg-emerald-500 text-white w-12 h-12 rounded-full text-sm font-bold shadow select-none flex items-center justify-center">A</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- External Quick Bar -->
+        <div class="mt-3 flex flex-wrap gap-2 justify-center text-[10px]">
+            <button id="toggleHelpBtn" class="bg-slate-800 hover:bg-slate-700 border border-slate-600 px-3 py-1.5 rounded flex items-center gap-1">
+                <span>❓</span> Help Guide [H]
+            </button>
+            <button id="muteAudioBtn" class="bg-slate-800 hover:bg-slate-700 border border-slate-600 px-3 py-1.5 rounded flex items-center gap-1">
+                <span id="muteIcon">🔊</span> Sound: ON
+            </button>
+            <button id="quickSaveBtn" class="bg-slate-800 hover:bg-slate-700 border border-slate-600 px-3 py-1.5 rounded flex items-center gap-1">
+                <span>💾</span> Quick Save
+            </button>
+        </div>
+    </div>
+
+    <!-- Sound & Logic Script -->
+    <script>
+    // =========================================================================
+    // 1. RETRO AUDIO SYNTHESIZER (Web Audio API)
+    // =========================================================================
+    class SoundEngine {
+        constructor() {
+            this.ctx = null;
+            this.muted = false;
+        }
+
+        init() {
+            if (!this.ctx) {
+                const AudioCtx = window.AudioContext || window.webkitAudioContext;
+                if (AudioCtx) this.ctx = new AudioCtx();
+            }
+        }
+
+        playTone(freq, type, duration, volume = 0.1) {
+            if (this.muted || !this.ctx) return;
+            try {
+                const osc = this.ctx.createOscillator();
+                const gain = this.ctx.createGain();
+                osc.type = type;
+                osc.frequency.setValueAtTime(freq, this.ctx.currentTime);
+                gain.gain.setValueAtTime(volume, this.ctx.currentTime);
+                gain.gain.exponentialRampToValueAtTime(0.0001, this.ctx.currentTime + duration);
+                osc.connect(gain);
+                gain.connect(this.ctx.destination);
+                osc.start();
+                osc.stop(this.ctx.currentTime + duration);
+            } catch (e) { console.warn(e); }
+        }
+
+        sfxText() {
+            this.playTone(600, 'square', 0.03, 0.03);
+        }
+
+        sfxBump() {
+            this.playTone(120, 'triangle', 0.08, 0.15);
+        }
+
+        sfxSelect() {
+            this.playTone(800, 'square', 0.05, 0.05);
+        }
+
+        sfxEncounters() {
+            if (this.muted || !this.ctx) return;
+            const freqs = [300, 400, 500, 700, 900, 1100];
+            freqs.forEach((f, i) => {
+                setTimeout(() => this.playTone(f, 'sawtooth', 0.08, 0.08), i * 50);
+            });
+        }
+
+        sfxAttack() {
+            if (this.muted || !this.ctx) return;
+            this.playTone(150, 'sawtooth', 0.15, 0.2);
+            setTimeout(() => this.playTone(80, 'square', 0.2, 0.25), 80);
+        }
+
+        sfxVictory() {
+            if (this.muted || !this.ctx) return;
+            const notes = [523, 659, 783, 1046];
+            notes.forEach((f, i) => {
+                setTimeout(() => this.playTone(f, 'square', 0.15, 0.1), i * 120);
+            });
+        }
+    }
+
+    const sound = new SoundEngine();
+
+    // =========================================================================
+    // 2. TILEMAP & WORLD DATA
+    // =========================================================================
+    const TILE_SIZE = 16;
+    const MAP_WIDTH = 24;
+    const MAP_HEIGHT = 18;
+
+    // Tile IDs: 0: Grass, 1: Path, 2: Water, 3: Tree, 4: Tall Grass, 5: Building Wall, 6: Door, 7: PC Center Wall
+    const TILE_TYPES = {
+        GRASS: 0,
+        PATH: 1,
+        WATER: 2,
+        TREE: 3,
+        TALL_GRASS: 4,
+        BUILDING: 5,
+        DOOR: 6,
+        ROOF: 7
+    };
+
+    // Town Map Matrix
+    const TOWN_MAP = [
+        [3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3],
+        [3,0,0,0,0,0,3,7,7,7,7,3,0,0,0,0,3,4,4,4,4,4,0,3],
+        [3,0,1,1,1,0,3,5,5,6,5,3,0,1,1,0,3,4,4,4,4,4,0,3],
+        [3,0,1,0,1,0,0,0,1,1,0,0,0,1,1,0,3,4,4,4,4,4,0,3],
+        [3,0,1,0,1,1,1,1,1,1,1,1,1,1,1,0,3,3,3,1,3,3,3,3],
+        [3,0,1,0,0,0,0,0,1,1,0,0,0,0,1,0,0,0,0,1,0,0,0,3],
+        [3,0,1,1,1,1,0,0,1,1,0,7,7,7,6,7,0,1,1,1,1,1,0,3],
+        [3,0,0,0,0,1,0,0,1,1,0,5,5,5,5,5,0,1,0,0,0,1,0,3],
+        [3,3,3,3,0,1,1,1,1,1,1,1,0,0,0,0,0,1,0,2,2,1,0,3],
+        [3,4,4,3,0,0,0,0,1,1,0,0,0,1,1,1,1,1,0,2,2,1,0,3],
+        [3,4,4,3,3,3,0,0,1,1,0,0,0,1,0,0,0,0,0,2,2,1,0,3],
+        [3,4,4,4,4,3,0,0,1,1,1,1,1,1,0,3,3,3,3,3,3,1,0,3],
+        [3,4,4,4,4,3,0,0,0,0,0,0,0,0,0,3,4,4,4,4,3,1,0,3],
+        [3,3,3,3,3,3,0,1,1,1,1,1,1,1,0,3,4,4,4,4,3,1,0,3],
+        [3,0,0,0,0,0,0,1,0,0,0,0,0,1,0,3,3,3,3,3,3,1,0,3],
+        [3,0,1,1,1,1,1,1,0,0,0,0,0,1,1,1,1,1,1,1,1,1,0,3],
+        [3,0,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,3],
+        [3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3]
+    ];
+
+    // Indoor Map Matrix (Pokémon Center)
+    const INDOOR_MAP = [
+        [3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3],
+        [3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3],
+        [3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3],
+        [3,3,3,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,3,3,3,3],
+        [3,3,3,1,1,1,1,1,5,5,5,5,5,1,1,1,1,1,1,1,3,3,3,3],
+        [3,3,3,1,1,1,1,1,5,5,5,5,5,1,1,1,1,1,1,1,3,3,3,3],
+        [3,3,3,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,3,3,3,3],
+        [3,3,3,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,3,3,3,3],
+        [3,3,3,1,1,1,1,1,1,1,6,1,1,1,1,1,1,1,1,1,3,3,3,3],
+        [3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3]
+    ];
+
+    // =========================================================================
+    // 3. POKÉMON & NPC DEFINITIONS
+    // =========================================================================
+    const POKEDEX = {
+        PIKACHU: { name: "Pikachu", hp: 35, attack: 55, defense: 40, speed: 90, color: "#facc15", type: "Electric", moves: ["ThunderShock", "Quick Attack"] },
+        TRECKO: { name: "Treecko", hp: 40, attack: 45, defense: 35, speed: 70, color: "#22c55e", type: "Grass", moves: ["Pound", "Absorb"] },
+        TORCHIC: { name: "Torchic", hp: 45, attack: 60, defense: 40, speed: 45, color: "#f97316", type: "Fire", moves: ["Scratch", "Ember"] },
+        MUDKIP: { name: "Mudkip", hp: 50, attack: 70, defense: 50, speed: 40, color: "#3b82f6", type: "Water", moves: ["Tackle", "Water Gun"] },
+        ZIGZAGOON: { name: "Zigzagoon", hp: 38, attack: 30, defense: 41, speed: 60, color: "#a8a29e", type: "Normal", moves: ["Tackle", "Growl"] },
+        WURMPLE: { name: "Wurmple", hp: 45, attack: 25, defense: 35, speed: 20, color: "#f43f5e", type: "Bug", moves: ["Tackle", "String Shot"] }
+    };
+
+    const MOVES = {
+        "Tackle": { power: 15, type: "Normal" },
+        "Scratch": { power: 18, type: "Normal" },
+        "Pound": { power: 15, type: "Normal" },
+        "Ember": { power: 25, type: "Fire" },
+        "Water Gun": { power: 25, type: "Water" },
+        "Absorb": { power: 20, type: "Grass" },
+        "ThunderShock": { power: 25, type: "Electric" },
+        "Quick Attack": { power: 20, type: "Normal" },
+        "Growl": { power: 5, type: "Normal" },
+        "String Shot": { power: 5, type: "Bug" }
+    };
+
+    // =========================================================================
+    // 4. GAME STATE ENGINE
+    // =========================================================================
+    class Game {
+        constructor() {
+            this.canvas = document.getElementById('gameCanvas');
+            this.ctx = this.canvas.getContext('2d');
+            
+            this.state = 'FIELD'; // 'FIELD', 'DIALOG', 'BATTLE', 'MENU', 'TRANSITION'
+
+            // World setup
+            this.currentMap = TOWN_MAP;
+            this.isIndoor = false;
+
+            // Player State
+            this.player = {
+                x: 9 * TILE_SIZE,
+                y: 4 * TILE_SIZE,
+                targetX: 9 * TILE_SIZE,
+                targetY: 4 * TILE_SIZE,
+                dir: 'DOWN', // UP, DOWN, LEFT, RIGHT
+                moving: false,
+                speed: 2,
+                animFrame: 0,
+                animTimer: 0
+            };
+
+            // Party & Inventory
+            this.party = [
+                {
+                    ...POKEDEX.TRECKO,
+                    level: 5,
+                    maxHp: 20,
+                    hp: 20,
+                    xp: 0,
+                    maxXp: 50
+                }
+            ];
+
+            this.inventory = {
+                potions: 3,
+                pokeballs: 5
+            };
+
+            // NPCs
+            this.npcs = [
+                {
+                    id: 1,
+                    x: 10 * TILE_SIZE,
+                    y: 7 * TILE_SIZE,
+                    dir: 'LEFT',
+                    color: '#ec4899',
+                    name: "May",
+                    dialog: [
+                        "Hey Trainer! Welcome to Littleroot Town!",
+                        "Be careful in the tall grass to the east.",
+                        "Wild Pokémon might pop out and attack!"
+                    ]
+                },
+                {
+                    id: 2,
+                    x: 13 * TILE_SIZE,
+                    y: 7 * TILE_SIZE,
+                    dir: 'DOWN',
+                    color: '#3b82f6',
+                    name: "Nurse Joy",
+                    dialog: [
+                        "Welcome to the Pokémon Center!",
+                        "Let me restore your Pokémon to full health!",
+                        "..." ,
+                        "Your Pokémon are fully healed! Take care!"
+                    ],
+                    onComplete: () => this.healParty()
+                },
+                {
+                    id: 3,
+                    x: 4 * TILE_SIZE,
+                    y: 12 * TILE_SIZE,
+                    dir: 'RIGHT',
+                    color: '#eab308',
+                    name: "Prof. Birch",
+                    dialog: [
+                        "Ho ho! Studying wild Pokémon is my passion.",
+                        "Here is a quick tip: Use Potions from your menu if HP gets low!"
+                    ]
+                }
+            ];
+
+            // Dialog system state
+            this.dialogBox = {
+                active: false,
+                speaker: "",
+                text: "",
+                fullText: "",
+                charIndex: 0,
+                queue: [],
+                onComplete: null
+            };
+
+            // Battle system state
+            this.battle = {
+                active: false,
+                enemy: null,
+                playerMon: null,
+                menuIndex: 0, // 0: Fight, 1: Bag, 2: Run
+                moveIndex: 0,
+                subMode: 'MAIN', // 'MAIN', 'MOVES', 'TEXT', 'ANIM'
+                logText: "",
+                turn: 'PLAYER' // 'PLAYER', 'ENEMY', 'BUSY'
+            };
+
+            // Menu state
+            this.menu = {
+                open: false,
+                index: 0,
+                options: ['POKÉMON', 'BAG', 'SAVE', 'HELP', 'EXIT']
+            };
+
+            // Input handling
+            this.keys = {};
+            this.keyPressHandled = {};
+
+            // Transitions & Camera
+            this.camera = { x: 0, y: 0 };
+            this.fadeAlpha = 0;
+            this.isTransitioning = false;
+
+            this.setupInputs();
+            this.loadSavedGame();
+        }
+
+        healParty() {
+            this.party.forEach(mon => mon.hp = mon.maxHp);
+            sound.sfxVictory();
+        }
+
+        setupInputs() {
+            window.addEventListener('keydown', (e) => {
+                const k = e.key.toLowerCase();
+                if (!this.keys[k]) {
+                    this.keyPressHandled[k] = false;
+                }
+                this.keys[k] = true;
+
+                // Open Help overlay anytime with H
+                if (k === 'h') {
+                    const guide = document.getElementById('guideOverlay');
+                    guide.classList.toggle('hidden');
+                }
+            });
+
+            window.addEventListener('keyup', (e) => {
+                const k = e.key.toLowerCase();
+                this.keys[k] = false;
+                this.keyPressHandled[k] = false;
+            });
+
+            // Virtual Buttons Setup
+            const bindBtn = (id, key) => {
+                const el = document.getElementById(id);
+                if (!el) return;
+                const start = (e) => { e.preventDefault(); this.keys[key] = true; this.keyPressHandled[key] = false; };
+                const end = (e) => { e.preventDefault(); this.keys[key] = false; this.keyPressHandled[key] = false; };
+                el.addEventListener('touchstart', start);
+                el.addEventListener('touchend', end);
+                el.addEventListener('mousedown', start);
+                el.addEventListener('mouseup', end);
+            };
+
+            bindBtn('btnUp', 'arrowup');
+            bindBtn('btnDown', 'arrowdown');
+            bindBtn('btnLeft', 'arrowleft');
+            bindBtn('btnRight', 'arrowright');
+            bindBtn('btnA', 'z');
+            bindBtn('btnB', 'x');
+            bindBtn('btnMenu', 'm');
+        }
+
+        isJustPressed(key) {
+            if (this.keys[key] && !this.keyPressHandled[key]) {
+                this.keyPressHandled[key] = true;
+                return true;
+            }
+            return false;
+        }
+
+        // =========================================================================
+        // 5. UPDATE LOOP LOGIC
+        // =========================================================================
+        update() {
+            if (this.isTransitioning) return;
+
+            if (this.state === 'FIELD') {
+                this.updateField();
+            } else if (this.state === 'DIALOG') {
+                this.updateDialog();
+            } else if (this.state === 'BATTLE') {
+                this.updateBattle();
+            } else if (this.state === 'MENU') {
+                this.updateMenu();
+            }
+        }
+
+        updateField() {
+            // Check Start / Menu trigger
+            if (this.isJustPressed('m') || this.isJustPressed('escape')) {
+                sound.sfxSelect();
+                this.state = 'MENU';
+                this.menu.index = 0;
+                return;
+            }
+
+            // Handle Grid Movement
+            if (this.player.moving) {
+                // Smooth step interpolation
+                if (this.player.x < this.player.targetX) this.player.x = Math.min(this.player.x + this.player.speed, this.player.targetX);
+                if (this.player.x > this.player.targetX) this.player.x = Math.max(this.player.x - this.player.speed, this.player.targetX);
+                if (this.player.y < this.player.targetY) this.player.y = Math.min(this.player.y + this.player.speed, this.player.targetY);
+                if (this.player.y > this.player.targetY) this.player.y = Math.max(this.player.y - this.player.speed, this.player.targetY);
+
+                // Animation frames
+                this.player.animTimer++;
+                if (this.player.animTimer % 8 === 0) {
+                    this.player.animFrame = (this.player.animFrame + 1) % 4;
+                }
+
+                // Check reached grid target
+                if (this.player.x === this.player.targetX && this.player.y === this.player.targetY) {
+                    this.player.moving = false;
+                    this.checkTileEvents();
+                }
+            } else {
+                // Input check for new movement
+                let dx = 0;
+                let dy = 0;
+
+                if (this.keys['arrowup'] || this.keys['w']) { dy = -1; this.player.dir = 'UP'; }
+                else if (this.keys['arrowdown'] || this.keys['s']) { dy = 1; this.player.dir = 'DOWN'; }
+                else if (this.keys['arrowleft'] || this.keys['a']) { dx = -1; this.player.dir = 'LEFT'; }
+                else if (this.keys['arrowright'] || this.keys['d']) { dx = 1; this.player.dir = 'RIGHT'; }
+
+                if (dx !== 0 || dy !== 0) {
+                    const nextTileX = Math.floor(this.player.x / TILE_SIZE) + dx;
+                    const nextTileY = Math.floor(this.player.y / TILE_SIZE) + dy;
+
+                    if (this.canWalkTo(nextTileX, nextTileY)) {
+                        this.player.targetX = nextTileX * TILE_SIZE;
+                        this.player.targetY = nextTileY * TILE_SIZE;
+                        this.player.moving = true;
+                    } else {
+                        sound.sfxBump();
+                    }
+                }
+
+                // Interact with NPCs / Objects
+                if (this.isJustPressed('z') || this.isJustPressed(' ') || this.isJustPressed('enter')) {
+                    this.interactFacing();
+                }
+            }
+
+            // Update Camera Focus (Centered on Player)
+            this.camera.x = this.player.x - this.canvas.width / 2 + TILE_SIZE / 2;
+            this.camera.y = this.player.y - this.canvas.height / 2 + TILE_SIZE / 2;
+        }
+
+        canWalkTo(tx, ty) {
+            if (tx < 0 || ty < 0 || tx >= MAP_WIDTH || ty >= MAP_HEIGHT) return false;
+
+            const tile = this.currentMap[ty][tx];
+            // Obstacles: Trees, Water, Building Walls
+            if (tile === TILE_TYPES.TREE || tile === TILE_TYPES.WATER || tile === TILE_TYPES.BUILDING || tile === TILE_TYPES.ROOF) {
+                return false;
+            }
+
+            // NPC Blockers
+            for (let npc of this.npcs) {
+                if (Math.floor(npc.x / TILE_SIZE) === tx && Math.floor(npc.y / TILE_SIZE) === ty) {
+                    return false;
+                }
+            }
+
+            return true;
+        }
+
+        checkTileEvents() {
+            const tx = Math.floor(this.player.x / TILE_SIZE);
+            const ty = Math.floor(this.player.y / TILE_SIZE);
+            const currentTile = this.currentMap[ty][tx];
+
+            // Door / Warp Event
+            if (currentTile === TILE_TYPES.DOOR) {
+                this.triggerWarp();
+                return;
+            }
+
+            // Wild Pokémon Grass Encounter Check
+            if (currentTile === TILE_TYPES.TALL_GRASS) {
+                if (Math.random() < 0.22) { // 22% chance per step
+                    this.startEncounter();
+                }
+            }
+        }
+
+        triggerWarp() {
+            this.isTransitioning = true;
+            sound.sfxSelect();
+            
+            // Fade Out / Fade In Effect
+            let alpha = 0;
+            const interval = setInterval(() => {
+                alpha += 0.15;
+                this.fadeAlpha = alpha;
+                if (alpha >= 1) {
+                    clearInterval(interval);
+                    
+                    // Switch Maps
+                    if (!this.isIndoor) {
+                        this.currentMap = INDOOR_MAP;
+                        this.isIndoor = true;
+                        this.player.x = 10 * TILE_SIZE;
+                        this.player.y = 7 * TILE_SIZE;
+                    } else {
+                        this.currentMap = TOWN_MAP;
+                        this.isIndoor = false;
+                        this.player.x = 14 * TILE_SIZE;
+                        this.player.y = 7 * TILE_SIZE;
+                    }
+                    this.player.targetX = this.player.x;
+                    this.player.targetY = this.player.y;
+
+                    // Fade Back In
+                    const backInterval = setInterval(() => {
+                        alpha -= 0.15;
+                        this.fadeAlpha = alpha;
+                        if (alpha <= 0) {
+                            this.fadeAlpha = 0;
+                            this.isTransitioning = false;
+                            clearInterval(backInterval);
+                        }
+                    }, 30);
+                }
+            }, 30);
+        }
+
+        interactFacing() {
+            let fx = Math.floor(this.player.x / TILE_SIZE);
+            let fy = Math.floor(this.player.y / TILE_SIZE);
+
+            if (this.player.dir === 'UP') fy -= 1;
+            if (this.player.dir === 'DOWN') fy += 1;
+            if (this.player.dir === 'LEFT') fx -= 1;
+            if (this.player.dir === 'RIGHT') fx += 1;
+
+            for (let npc of this.npcs) {
+                if (Math.floor(npc.x / TILE_SIZE) === fx && Math.floor(npc.y / TILE_SIZE) === fy) {
+                    // Make NPC turn towards player
+                    if (this.player.dir === 'UP') npc.dir = 'DOWN';
+                    else if (this.player.dir === 'DOWN') npc.dir = 'UP';
+                    else if (this.player.dir === 'LEFT') npc.dir = 'RIGHT';
+                    else if (this.player.dir === 'RIGHT') npc.dir = 'LEFT';
+
+                    this.startDialog(npc.name, [...npc.dialog], npc.onComplete);
+                    return;
+                }
+            }
+        }
+
+        // =========================================================================
+        // 6. DIALOG SYSTEM
+        // =========================================================================
+        startDialog(speaker, lines, onComplete = null) {
+            this.state = 'DIALOG';
+            this.dialogBox.speaker = speaker;
+            this.dialogBox.queue = lines;
+            this.dialogBox.onComplete = onComplete;
+            this.advanceDialog();
+        }
+
+        advanceDialog() {
+            if (this.dialogBox.queue.length === 0) {
+                this.state = 'FIELD';
+                if (this.dialogBox.onComplete) this.dialogBox.onComplete();
+                return;
+            }
+
+            this.dialogBox.fullText = this.dialogBox.queue.shift();
+            this.dialogBox.text = "";
+            this.dialogBox.charIndex = 0;
+            this.dialogBox.active = true;
+        }
+
+        updateDialog() {
+            // Typewriter effect
+            if (this.dialogBox.charIndex < this.dialogBox.fullText.length) {
+                this.dialogBox.text += this.dialogBox.fullText[this.dialogBox.charIndex];
+                this.dialogBox.charIndex++;
+                if (this.dialogBox.charIndex % 2 === 0) sound.sfxText();
+            }
+
+            if (this.isJustPressed('z') || this.isJustPressed(' ') || this.isJustPressed('enter')) {
+                if (this.dialogBox.charIndex < this.dialogBox.fullText.length) {
+                    // Fast-forward text
+                    this.dialogBox.text = this.dialogBox.fullText;
+                    this.dialogBox.charIndex = this.dialogBox.fullText.length;
+                } else {
+                    sound.sfxSelect();
+                    this.advanceDialog();
+                }
+            }
+        }
+
+        // =========================================================================
+        // 7. TURN-BASED BATTLE SYSTEM
+        // =========================================================================
+        startEncounter() {
+            sound.sfxEncounters();
+            this.state = 'TRANSITION';
+            
+            // Screen Flash & Battle Transition
+            let flashCount = 0;
+            const flashInterval = setInterval(() => {
+                this.fadeAlpha = (flashCount % 2 === 0) ? 1 : 0;
+                flashCount++;
+                if (flashCount > 6) {
+                    clearInterval(flashInterval);
+                    this.fadeAlpha = 0;
+                    this.initBattle();
+                }
+            }, 80);
+        }
+
+        initBattle() {
+            // Pick random wild pokemon
+            const wildKeys = ['ZIGZAGOON', 'WURMPLE', 'PIKACHU'];
+            const randomKey = wildKeys[Math.floor(Math.random() * wildKeys.length)];
+            const baseMon = POKEDEX[randomKey];
+
+            const level = Math.floor(Math.random() * 3) + 3; // Lvl 3-5
+            const maxHp = Math.floor(baseMon.hp * (level / 5));
+
+            this.battle.enemy = {
+                ...baseMon,
+                level: level,
+                maxHp: maxHp,
+                hp: maxHp
+            };
+
+            this.battle.playerMon = this.party[0]; // Active Pokémon
+            this.battle.menuIndex = 0;
+            this.battle.moveIndex = 0;
+            this.battle.subMode = 'TEXT';
+            this.battle.logText = `A wild ${this.battle.enemy.name} appeared!`;
+            this.battle.turn = 'PLAYER';
+            this.state = 'BATTLE';
+        }
+
+        updateBattle() {
+            if (this.battle.subMode === 'TEXT') {
+                if (this.isJustPressed('z') || this.isJustPressed(' ') || this.isJustPressed('enter')) {
+                    sound.sfxSelect();
+                    if (this.battle.enemy.hp <= 0) {
+                        this.endBattle(true);
+                    } else if (this.battle.playerMon.hp <= 0) {
+                        this.battle.logText = `${this.battle.playerMon.name} fainted! Returning...`;
+                        this.endBattle(false);
+                    } else if (this.battle.turn === 'ENEMY') {
+                        this.executeEnemyTurn();
+                    } else {
+                        this.battle.subMode = 'MAIN';
+                    }
+                }
+                return;
+            }
+
+            if (this.battle.subMode === 'MAIN') {
+                if (this.isJustPressed('arrowright') || this.isJustPressed('d')) this.battle.menuIndex = (this.battle.menuIndex + 1) % 3;
+                if (this.isJustPressed('arrowleft') || this.isJustPressed('a')) this.battle.menuIndex = (this.battle.menuIndex + 2) % 3;
+
+                if (this.isJustPressed('z') || this.isJustPressed(' ') || this.isJustPressed('enter')) {
+                    sound.sfxSelect();
+                    if (this.battle.menuIndex === 0) { // Fight
+                        this.battle.subMode = 'MOVES';
+                        this.battle.moveIndex = 0;
+                    } else if (this.battle.menuIndex === 1) { // Bag (Potion)
+                        this.usePotionInBattle();
+                    } else if (this.battle.menuIndex === 2) { // Run
+                        this.battle.logText = "Got away safely!";
+                        this.battle.subMode = 'TEXT';
+                        this.battle.enemy.hp = 0; // Trigger battle exit
+                    }
+                }
+            } else if (this.battle.subMode === 'MOVES') {
+                const moveCount = this.battle.playerMon.moves.length;
+                if (this.isJustPressed('arrowdown') || this.isJustPressed('s')) this.battle.moveIndex = (this.battle.moveIndex + 1) % moveCount;
+                if (this.isJustPressed('arrowup') || this.isJustPressed('w')) this.battle.moveIndex = (this.battle.moveIndex + moveCount - 1) % moveCount;
+
+                if (this.isJustPressed('x')) {
+                    this.battle.subMode = 'MAIN';
+                }
+
+                if (this.isJustPressed('z') || this.isJustPressed(' ') || this.isJustPressed('enter')) {
+                    sound.sfxSelect();
+                    const moveName = this.battle.playerMon.moves[this.battle.moveIndex];
+                    this.executePlayerMove(moveName);
+                }
+            }
+        }
+
+        executePlayerMove(moveName) {
+            sound.sfxAttack();
+            const move = MOVES[moveName] || { power: 15 };
+            const damage = Math.floor((move.power * (this.battle.playerMon.attack / this.battle.enemy.defense)) + 2);
+            this.battle.enemy.hp = Math.max(0, this.battle.enemy.hp - damage);
+
+            this.battle.logText = `${this.battle.playerMon.name} used ${moveName}!`;
+            this.battle.subMode = 'TEXT';
+
+            if (this.battle.enemy.hp <= 0) {
+                // Victory / XP gain
+                const xpGain = this.battle.enemy.level * 20;
+                this.battle.playerMon.xp += xpGain;
+                if (this.battle.playerMon.xp >= this.battle.playerMon.maxXp) {
+                    this.battle.playerMon.level++;
+                    this.battle.playerMon.maxXp += 30;
+                    this.battle.playerMon.maxHp += 4;
+                    this.battle.playerMon.hp = this.battle.playerMon.maxHp;
+                    this.battle.logText += ` Gained ${xpGain} XP! Level up to Lvl ${this.battle.playerMon.level}!`;
+                } else {
+                    this.battle.logText += ` Gained ${xpGain} XP!`;
+                }
+            } else {
+                this.battle.turn = 'ENEMY';
+            }
+        }
+
+        executeEnemyTurn() {
+            sound.sfxAttack();
+            const randomMove = this.battle.enemy.moves[Math.floor(Math.random() * this.battle.enemy.moves.length)];
+            const move = MOVES[randomMove] || { power: 12 };
+            const damage = Math.floor((move.power * (this.battle.enemy.attack / this.battle.playerMon.defense)) + 1);
+            
+            this.battle.playerMon.hp = Math.max(0, this.battle.playerMon.hp - damage);
+            this.battle.logText = `Wild ${this.battle.enemy.name} used ${randomMove}!`;
+            this.battle.turn = 'PLAYER';
+            this.battle.subMode = 'TEXT';
+        }
+
+        usePotionInBattle() {
+            if (this.inventory.potions > 0) {
+                this.inventory.potions--;
+                this.battle.playerMon.hp = Math.min(this.battle.playerMon.maxHp, this.battle.playerMon.hp + 20);
+                sound.sfxVictory();
+                this.battle.logText = `Used Potion! Restored 20 HP.`;
+                this.battle.subMode = 'TEXT';
+                this.battle.turn = 'ENEMY';
+            } else {
+                this.battle.logText = "You don't have any Potions left!";
+                this.battle.subMode = 'TEXT';
+            }
+        }
+
+        endBattle(won) {
+            if (won) sound.sfxVictory();
+            this.state = 'FIELD';
+        }
+
+        // =========================================================================
+        // 8. PAUSE MENU & SAVING LOGIC
+        // =========================================================================
+        updateMenu() {
+            if (this.isJustPressed('arrowdown') || this.isJustPressed('s')) {
+                sound.sfxSelect();
+                this.menu.index = (this.menu.index + 1) % this.menu.options.length;
+            }
+            if (this.isJustPressed('arrowup') || this.isJustPressed('w')) {
+                sound.sfxSelect();
+                this.menu.index = (this.menu.index + this.menu.options.length - 1) % this.menu.options.length;
+            }
+
+            if (this.isJustPressed('x') || this.isJustPressed('m')) {
+                sound.sfxSelect();
+                this.state = 'FIELD';
+            }
+
+            if (this.isJustPressed('z') || this.isJustPressed(' ') || this.isJustPressed('enter')) {
+                sound.sfxSelect();
+                const choice = this.menu.options[this.menu.index];
+                if (choice === 'EXIT') {
+                    this.state = 'FIELD';
+                } else if (choice === 'SAVE') {
+                    this.saveGame();
+                    this.startDialog("SYSTEM", ["Your game progress has been saved successfully!"]);
+                } else if (choice === 'HELP') {
+                    document.getElementById('guideOverlay').classList.remove('hidden');
+                    this.state = 'FIELD';
+                } else if (choice === 'BAG') {
+                    this.startDialog("BAG", [`Potions: ${this.inventory.potions}`, `Pokéballs: ${this.inventory.pokeballs}`]);
+                } else if (choice === 'POKÉMON') {
+                    const mon = this.party[0];
+                    this.startDialog("PARTY", [`${mon.name} Lvl ${mon.level}`, `HP: ${mon.hp}/${mon.maxHp}`, `Type: ${mon.type}`]);
+                }
+            }
+        }
+
+        saveGame() {
+            const saveData = {
+                player: { x: this.player.x, y: this.player.y },
+                party: this.party,
+                inventory: this.inventory,
+                isIndoor: this.isIndoor
+            };
+            localStorage.setItem('pokemon_gba_save', JSON.stringify(saveData));
+        }
+
+        loadSavedGame() {
+            const data = localStorage.getItem('pokemon_gba_save');
+            if (data) {
+                try {
+                    const parsed = JSON.parse(data);
+                    this.player.x = parsed.player.x;
+                    this.player.y = parsed.player.y;
+                    this.player.targetX = parsed.player.x;
+                    this.player.targetY = parsed.player.y;
+                    this.party = parsed.party;
+                    this.inventory = parsed.inventory;
+                    this.isIndoor = parsed.isIndoor;
+                    this.currentMap = this.isIndoor ? INDOOR_MAP : TOWN_MAP;
+                } catch(e) { console.error("Save load error", e); }
+            }
+        }
+
+        // =========================================================================
+        // 9. RENDERING SYSTEM (CANVAS CANVAS VISUALS)
+        // =========================================================================
+        render() {
+            this.ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
+
+            this.ctx.save();
+            // Apply Camera Translation
+            this.ctx.translate(-Math.floor(this.camera.x), -Math.floor(this.camera.y));
+
+            // Render Map Tiles
+            this.renderMap();
+
+            // Render NPCs
+            this.renderNPCs();
+
+            // Render Player
+            this.renderPlayer();
+
+            this.ctx.restore();
+
+            // UI Render Overlays (Screen Coordinates)
+            if (this.state === 'DIALOG') this.renderDialogBox();
+            if (this.state === 'BATTLE') this.renderBattleScreen();
+            if (this.state === 'MENU') this.renderPauseMenu();
+
+            // Screen Transition Fades
+            if (this.fadeAlpha > 0) {
+                this.ctx.fillStyle = `rgba(0, 0, 0, ${this.fadeAlpha})`;
+                this.ctx.fillRect(0, 0, this.canvas.width, this.canvas.height);
+            }
+        }
+
+        renderMap() {
+            for (let r = 0; r < MAP_HEIGHT; r++) {
+                for (let c = 0; c < MAP_WIDTH; c++) {
+                    const tile = this.currentMap[r][c];
+                    const x = c * TILE_SIZE;
+                    const y = r * TILE_SIZE;
+
+                    if (tile === TILE_TYPES.GRASS) {
+                        this.ctx.fillStyle = "#4ade80"; // Bright GBA grass
+                        this.ctx.fillRect(x, y, TILE_SIZE, TILE_SIZE);
+                    } else if (tile === TILE_TYPES.PATH) {
+                        this.ctx.fillStyle = "#fde047"; // Dirt path
+                        this.ctx.fillRect(x, y, TILE_SIZE, TILE_SIZE);
+                    } else if (tile === TILE_TYPES.WATER) {
+                        this.ctx.fillStyle = "#38bdf8"; // Water
+                        this.ctx.fillRect(x, y, TILE_SIZE, TILE_SIZE);
+                        // Subtle animated wave lines
+                        this.ctx.fillStyle = "#7dd3fc";
+                        this.ctx.fillRect(x + 2, y + (Date.now() / 300 % 8), 6, 2);
+                    } else if (tile === TILE_TYPES.TREE) {
+                        // Tree trunk & canopy
+                        this.ctx.fillStyle = "#166534";
+                        this.ctx.fillRect(x, y, TILE_SIZE, TILE_SIZE);
+                        this.ctx.fillStyle = "#15803d";
+                        this.ctx.fillRect(x + 2, y + 2, TILE_SIZE - 4, TILE_SIZE - 4);
+                    } else if (tile === TILE_TYPES.TALL_GRASS) {
+                        this.ctx.fillStyle = "#4ade80";
+                        this.ctx.fillRect(x, y, TILE_SIZE, TILE_SIZE);
+                        // Grass blades
+                        this.ctx.fillStyle = "#15803d";
+                        this.ctx.fillRect(x + 2, y + 2, 3, 12);
+                        this.ctx.fillRect(x + 7, y + 5, 3, 9);
+                        this.ctx.fillRect(x + 12, y + 1, 3, 13);
+                    } else if (tile === TILE_TYPES.BUILDING) {
+                        this.ctx.fillStyle = "#94a3b8"; // Center walls
+                        this.ctx.fillRect(x, y, TILE_SIZE, TILE_SIZE);
+                    } else if (tile === TILE_TYPES.DOOR) {
+                        this.ctx.fillStyle = "#475569";
+                        this.ctx.fillRect(x, y, TILE_SIZE, TILE_SIZE);
+                        this.ctx.fillStyle = "#f87171"; // Red mat
+                        this.ctx.fillRect(x + 2, y + 10, 12, 6);
+                    } else if (tile === TILE_TYPES.ROOF) {
+                        this.ctx.fillStyle = "#ef4444"; // Red roof
+                        this.ctx.fillRect(x, y, TILE_SIZE, TILE_SIZE);
+                    }
+                }
+            }
+        }
+
+        renderPlayer() {
+            const px = this.player.x;
+            const py = this.player.y;
+
+            // Player Body / Red Cap Visual
+            this.ctx.fillStyle = "#dc2626"; // Red cap
+            this.ctx.fillRect(px + 3, py + 1, 10, 4);
+
+            this.ctx.fillStyle = "#fca5a5"; // Face skin
+            this.ctx.fillRect(px + 4, py + 5, 8, 4);
+
+            this.ctx.fillStyle = "#2563eb"; // Blue shirt
+            this.ctx.fillRect(px + 3, py + 9, 10, 5);
+
+            // Legs animation bounce
+            const offset = (this.player.moving && this.player.animFrame % 2 === 0) ? 1 : 0;
+            this.ctx.fillStyle = "#1e293b"; // Pants
+            this.ctx.fillRect(px + 4, py + 14 - offset, 3, 2);
+            this.ctx.fillRect(px + 9, py + 14 + offset, 3, 2);
+        }
+
+        renderNPCs() {
+            this.npcs.forEach(npc => {
+                this.ctx.fillStyle = npc.color;
+                this.ctx.fillRect(npc.x + 3, npc.y + 2, 10, 12);
+                this.ctx.fillStyle = "#fde047"; // Hair/Hat
+                this.ctx.fillRect(npc.x + 3, npc.y, 10, 4);
+            });
+        }
+
+        renderDialogBox() {
+            // GBA Classic Retro Border Dialog Window
+            this.ctx.fillStyle = "#1e293b";
+            this.ctx.fillRect(10, 220, 460, 90);
+            this.ctx.strokeStyle = "#fbbf24";
+            this.ctx.lineWidth = 4;
+            this.ctx.strokeRect(12, 222, 456, 86);
+
+            // Speaker Tag
+            this.ctx.fillStyle = "#fbbf24";
+            this.ctx.font = "10px 'Press Start 2P'";
+            this.ctx.fillText(this.dialogBox.speaker, 25, 240);
+
+            // Text output
+            this.ctx.fillStyle = "#ffffff";
+            this.ctx.font = "9px 'Press Start 2P'";
+            this.wrapText(this.dialogBox.text, 25, 262, 430, 16);
+        }
+
+        wrapText(text, x, y, maxWidth, lineHeight) {
+            const words = text.split(' ');
+            let line = '';
+
+            for (let n = 0; n < words.length; n++) {
+                const testLine = line + words[n] + ' ';
+                const metrics = this.ctx.measureText(testLine);
+                const testWidth = metrics.width;
+                if (testWidth > maxWidth && n > 0) {
+                    this.ctx.fillText(line, x, y);
+                    line = words[n] + ' ';
+                    y += lineHeight;
+                } else {
+                    line = testLine;
+                }
+            }
+            this.ctx.fillText(line, x, y);
+        }
+
+        renderBattleScreen() {
+            // Background
+            this.ctx.fillStyle = "#ecfdf5"; // Emerald light background
+            this.ctx.fillRect(0, 0, 480, 320);
+
+            // Battle Field Platforms
+            this.ctx.fillStyle = "#a7f3d0";
+            this.ctx.beginPath();
+            this.ctx.ellipse(360, 120, 80, 25, 0, 0, Math.PI * 2); // Enemy platform
+            this.ctx.fill();
+
+            this.ctx.beginPath();
+            this.ctx.ellipse(120, 220, 90, 30, 0, 0, Math.PI * 2); // Player platform
+            this.ctx.fill();
+
+            // Enemy Pokémon Sprite Placeholder
+            const enemy = this.battle.enemy;
+            this.ctx.fillStyle = enemy.color;
+            this.ctx.fillRect(330, 70, 50, 50);
+
+            // Player Pokémon Sprite Placeholder
+            const mon = this.battle.playerMon;
+            this.ctx.fillStyle = mon.color;
+            this.ctx.fillRect(90, 160, 60, 60);
+
+            // Enemy Info Card
+            this.renderHealthBar(enemy.name, enemy.level, enemy.hp, enemy.maxHp, 20, 20);
+
+            // Player Info Card
+            this.renderHealthBar(mon.name, mon.level, mon.hp, mon.maxHp, 260, 150, true, mon.xp, mon.maxXp);
+
+            // Action Command Box
+            this.ctx.fillStyle = "#1e293b";
+            this.ctx.fillRect(0, 230, 480, 90);
+            this.ctx.strokeStyle = "#38bdf8";
+            this.ctx.lineWidth = 4;
+            this.ctx.strokeRect(4, 234, 472, 82);
+
+            if (this.battle.subMode === 'MAIN') {
+                const choices = ['FIGHT', 'BAG', 'RUN'];
+                choices.forEach((c, i) => {
+                    this.ctx.fillStyle = (this.battle.menuIndex === i) ? "#facc15" : "#ffffff";
+                    this.ctx.font = "10px 'Press Start 2P'";
+                    this.ctx.fillText((this.battle.menuIndex === i ? "▶ " : "  ") + c, 30 + (i * 140), 280);
+                });
+            } else if (this.battle.subMode === 'MOVES') {
+                mon.moves.forEach((m, i) => {
+                    this.ctx.fillStyle = (this.battle.moveIndex === i) ? "#facc15" : "#ffffff";
+                    this.ctx.font = "10px 'Press Start 2P'";
+                    this.ctx.fillText((this.battle.moveIndex === i ? "▶ " : "  ") + m, 30 + (i % 2 * 200), 265 + (Math.floor(i / 2) * 25));
+                });
+            } else {
+                // Battle Dialog Log
+                this.ctx.fillStyle = "#ffffff";
+                this.ctx.font = "9px 'Press Start 2P'";
+                this.wrapText(this.battle.logText, 20, 265, 440, 16);
+            }
+        }
+
+        renderHealthBar(name, lvl, hp, maxHp, x, y, showXp = false, xp = 0, maxXp = 100) {
+            this.ctx.fillStyle = "#f8fafc";
+            this.ctx.fillRect(x, y, 190, 50);
+            this.ctx.strokeStyle = "#334155";
+            this.ctx.lineWidth = 2;
+            this.ctx.strokeRect(x, y, 190, 50);
+
+            this.ctx.fillStyle = "#0f172a";
+            this.ctx.font = "8px 'Press Start 2P'";
+            this.ctx.fillText(name, x + 10, y + 16);
+            this.ctx.fillText(`Lv${lvl}`, x + 140, y + 16);
+
+            // HP Bar Outer
+            this.ctx.fillStyle = "#475569";
+            this.ctx.fillRect(x + 40, y + 25, 130, 8);
+
+            // HP Bar Inner Fill
+            const hpRatio = Math.max(0, hp / maxHp);
+            this.ctx.fillStyle = hpRatio > 0.5 ? "#22c55e" : (hpRatio > 0.2 ? "#eab308" : "#ef4444");
+            this.ctx.fillRect(x + 40, y + 25, Math.floor(130 * hpRatio), 8);
+
+            this.ctx.fillStyle = "#0f172a";
+            this.ctx.fillText("HP", x + 10, y + 32);
+
+            if (showXp) {
+                // XP Bar
+                this.ctx.fillStyle = "#94a3b8";
+                this.ctx.fillRect(x + 40, y + 38, 130, 4);
+                const xpRatio = Math.min(1, xp / maxXp);
+                this.ctx.fillStyle = "#3b82f6";
+                this.ctx.fillRect(x + 40, y + 38, Math.floor(130 * xpRatio), 4);
+            }
+        }
+
+        renderPauseMenu() {
+            this.ctx.fillStyle = "rgba(15, 23, 42, 0.9)";
+            this.ctx.fillRect(320, 10, 150, 180);
+            this.ctx.strokeStyle = "#fbbf24";
+            this.ctx.lineWidth = 3;
+            this.ctx.strokeRect(322, 12, 146, 176);
+
+            this.menu.options.forEach((opt, i) => {
+                this.ctx.fillStyle = (this.menu.index === i) ? "#facc15" : "#ffffff";
+                this.ctx.font = "9px 'Press Start 2P'";
+                this.ctx.fillText((this.menu.index === i ? "▶ " : "  ") + opt, 335, 40 + (i * 30));
+            });
+        }
+    }
+
+    // =========================================================================
+    // 10. GAME LAUNCHER & INITIALIZATION
+    // =========================================================================
+    window.onload = () => {
+        const game = new Game();
+
+        // Canvas Scale Responsiveness
+        function resizeCanvas() {
+            const container = game.canvas.parentElement;
+            const w = container.clientWidth;
+            // Maintain GBA aspect ratio (3:2)
+            game.canvas.style.width = '100%';
+            game.canvas.style.height = 'auto';
+        }
+        window.addEventListener('resize', resizeCanvas);
+        resizeCanvas();
+
+        // Sound Audio Context Enable on Start
+        const startBtn = document.getElementById('startAdventureBtn');
+        const closeGuideBtn = document.getElementById('closeGuideBtn');
+        const guideOverlay = document.getElementById('guideOverlay');
+
+        const dismissGuide = () => {
+            sound.init();
+            guideOverlay.classList.add('hidden');
+        };
+
+        startBtn.addEventListener('click', dismissGuide);
+        closeGuideBtn.addEventListener('click', dismissGuide);
+
+        // Sound Mute Toggle
+        const muteBtn = document.getElementById('muteAudioBtn');
+        const muteIcon = document.getElementById('muteIcon');
+        muteBtn.addEventListener('click', () => {
+            sound.muted = !sound.muted;
+            muteIcon.textContent = sound.muted ? "🔇" : "🔊";
+            muteBtn.classList.toggle('text-rose-400', sound.muted);
+        });
+
+        // Quick Save Button
+        document.getElementById('quickSaveBtn').addEventListener('click', () => {
+            game.saveGame();
+            sound.sfxSelect();
+            game.startDialog("SYSTEM", ["Game state saved successfully!"]);
+        });
+
+        // Main Animation Loop
+        function gameLoop() {
+            game.update();
+            game.render();
+            requestAnimationFrame(gameLoop);
+        }
+
+        // Start Loop
+        requestAnimationFrame(gameLoop);
+    };
+    </script>
+</body>
+</html>
